@@ -3,6 +3,9 @@ const path = require("path");
 const fs = require("fs");
 const util = require("util");
 
+// Helper method for generating unique ids
+const uuid = require('./helpers/uuid');
+
 const PORT = process.env.PORT || 3001;
 
 const app = express();
@@ -54,7 +57,8 @@ app.post('/api/notes', (req, res) => {
   if (req.body) {
     const newNote = {
       title,
-      text
+      text,
+      id: uuid()
     };
 
     readAndAppend(newNote, './db/notes.json');
@@ -62,6 +66,22 @@ app.post('/api/notes', (req, res) => {
   } else {
     res.error('Error in adding note');
   }
+});
+
+app.delete('/api/notes/:id', (req, res) => {
+  console.info(`${req.method} request received to delete a note`);
+  
+  readFromFile('./db/notes.json').then((data) => {
+    data = JSON.parse(data);
+    console.log(data)
+    for(let i = 0; i < data.length; i++) {
+      if(data[i].id === req.params.id) {
+        data.splice(i);
+        writeToFile('./db/notes.json', data);
+        res.json(`${i} deleted`)
+      }
+    };
+  })
 });
 
 app.listen(PORT, () =>
